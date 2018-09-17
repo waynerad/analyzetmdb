@@ -88,22 +88,22 @@ def csv_to_database(csv_file, tblname, rename_fields, dbcu):
                 dbcu.execute(sql)
             rownum = rownum + 1
 
-# logarithm of the number "plus one" to keep 0s from blowing up the system
-# we are making the assumption that the "plus one" has little effect because we are dealing with
-# movie budgets and revenues in millions of dollars
+# Logarithm of the number "plus one" to keep 0s from blowing up the system.
+# We are making the assumption that the "plus one" has little effect because we are dealing with
+# movie budgets and revenues in millions of dollars.
 def mylogp1(num):
     """Returns log(num + 1)"""
     return np.log(num + 1.0)
 
-# in the Jupyter notebook, we convert numbers like "1.902723e+09" to numbers "in millions with just
+# In the Jupyter notebook, we convert numbers like "1.902723e+09" to numbers "in millions with just
 # df_movies['revenue_adj_mil'] = df_movies['revenue_adj'] / 1000000
-# we need something comparable here for our SQL queries
+# We need something comparable here for our SQL queries.
 def mytomillions(num):
     """Convert dollars to dollars in millions."""
     return num / 1000000.0
 
 # map_column creates a new column with a value from an existing column mapped through a function
-# This is one thing that's easier to do in Pandas than SQL
+# This is one thing that's easier to do in Pandas than SQL.
 # In Pandas this functionality is built-in but here we have to do it ourselves.
 def map_colum(dbcu, tblname, primarykey, whereclause, col1, col2, mapfunc):
     """Maps col1 to col 2 by calling mapfunc."""
@@ -119,18 +119,20 @@ def map_colum(dbcu, tblname, primarykey, whereclause, col1, col2, mapfunc):
         sql = dict_to_update(tblname, updaterec, subwhere)
         dbcu.execute(sql)
 
-# the Laplace number assumes a prior "vote" of 5.0 (exactly average)
-# and that will be the number assigned if the number of votes is zero
-# as the number of votes increases, the Laplace number will trend towards
+# The Laplace number assumes a prior "vote" of 5.0 (exactly average)
+# and that will be the number assigned if the number of votes is zero.
+# As the number of votes increases, the Laplace number will trend towards
 # the actual average.
 # In this manner the Laplace number combines both the vote count and vote average
 # fields into a single number which reasonably represents how "good" the movie is
 # according to the votes.
-# the actual formula is:
+# The actual formula is:
 # laplace_nums =
 #     (5.0 + (df_with_revenue['vote_count'] * df_with_revenue['vote_average']))
 #     /
 #     (1.0 + df_with_revenue['vote_count'])
+# The mathematical justification for this is explained here:
+# https://en.wikipedia.org/wiki/Rule_of_succession
 def calc_laplace_nums(dbcu):
     """Takes vote count and vote average and sets laplace_num."""
     sql = 'SELECT id, vote_count, vote_average FROM movies WHERE 1;'
@@ -147,7 +149,7 @@ def calc_laplace_nums(dbcu):
 # sql_to_dataframe is the primary function -- it transforms any SQL query into a Pandas DataFrame!
 # Magic! But it only works if you set row_factory = sqlite3.Row on your connection BEFORE
 # you create your cursor!
-# Otherwise row.keys() in here will fail
+# Otherwise row.keys() in here will fail.
 def sql_to_dataframe(dbcu, sql):
     """Takes an SQL query and returns a Pandas dataframe."""
     count = 0
@@ -271,8 +273,8 @@ def calc_profit(dbcu):
         sql = dict_to_update('movies', updaterec, subwhere)
         dbcu.execute(sql)
 
-# this function is like sql_to_dataframe except it just gives us a single number back
-# useful if you're just selecting a count of something or the ID number for something
+# This function is like sql_to_dataframe except it just gives us a single number back
+# useful if you're just selecting a count of something or the ID number for something.
 def sql_to_scalar(dbcu, sql):
     """Return a single value from an SQL query"""
     for row in dbcu.execute(sql):
@@ -368,8 +370,6 @@ def main():
                     AND (revenue_adj_log > 0) ORDER BY id;'
     sql_y = 'SELECT revenue_adj_log FROM movies WHERE (budget_adj_log > 0)    \
                     AND (revenue_adj_log > 0) ORDER BY id;'
-    print('X = ', sql_x)
-    print('Y = ', sql_y)
 
     df_x = sql_to_dataframe(moviecu, sql_x)
     df_y = sql_to_dataframe(moviecu, sql_y)
@@ -394,8 +394,6 @@ def main():
              FROM movies                                      \
              WHERE (runtime > 0) AND (revenue_adj_log > 0)    \
              ORDER BY id;'
-    print('X = ', sql_x)
-    print('Y = ', sql_y)
 
     df_x = sql_to_dataframe(moviecu, sql_x)
     df_y = sql_to_dataframe(moviecu, sql_y)
@@ -481,8 +479,6 @@ def main():
                 sql_y = 'SELECT laplace_num FROM movies WHERE (laplace_num > 0) ORDER BY id;'
             else:
                 print('Oh no, unknown target!')
-            print('X = ', sql_x)
-            print('Y = ', sql_y)
 
             df_x = sql_to_dataframe(moviecu, sql_x)
             df_y = sql_to_dataframe(moviecu, sql_y)
@@ -557,5 +553,7 @@ def main():
         df_max_movies.to_csv(path + 'max_movies_by_year_for_' + field_selected + '.csv')
 
     movieconn.close()
+
+    print('Done!')
 
 main()
